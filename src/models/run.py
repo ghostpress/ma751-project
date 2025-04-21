@@ -11,13 +11,13 @@ train_y = pd.read_csv(utils.get_data_directory() + "/train_y.csv", index_col=0)
 
 # Convert to numeric-only
 train_X_num = utils.numeric_only(train_X)
-train_y_num = train_y.to_numpy()
+train_y_num = train_y.to_numpy().flatten()
 
 # Normalize X, to ease GD convergence
 train_X_norm = utils.normalize(train_X_num)
 init_lambda = 50  # TODO: write cross-validation function
 
 model = LassoRegression()
-model.fit(train_X_norm, train_y, init_lambda)
+model.fit(train_X_norm, train_y_num, init_lambda)
 
 print("Ok.")
