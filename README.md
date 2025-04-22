@@ -3,11 +3,14 @@ Repository hosting the final project for Statistical Machine Learning, taught by
 Tasks this week:
 
 1. Lucia to implement LASSO model for Scandinavian glacier dataset
+   a. Create diagnostic plots of training error and gradient values
+   b. Combine validation and training sets (if everyone doing cross-validation)?
+   c. Re-do training with variable selection from Firas' OLS model
+   d. Test model
 2. Loc to use scikit-learn to train ML model
 3. Firas to read glaciology class notes, find interesting data exploration questions
-4. Firas to fit OLS model
+4. Firas to commit and push OLS code
+5. Lucia to start writing report
 
-Next week:
 
-1. Implement cross-validation for each model
 
