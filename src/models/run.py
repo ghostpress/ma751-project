@@ -15,9 +15,15 @@ train_y_num = train_y.to_numpy().flatten()
 
 # Normalize X, to ease GD convergence
 train_X_norm = utils.normalize(train_X_num)
-init_lambda = 50  # TODO: write cross-validation function
 
-model = LassoRegression(train_X_norm, train_y_num, init_lambda)
-#model.fit()
+# Potential regularization parameter values, to select with cross-validation
+lambda_vals = [0.0, 0.001, 0.1, 1.0, 10.0, 100.0]
+
+model = LassoRegression(train_X_norm, train_y_num, reg=0.0001)  # small initial lambda value
+model.fit(cross_val=True, nfolds=10, param_vals=lambda_vals, iterations=100)  
+
+# TODO: use variable selection from Firas' OLS analysis to re-train
+# TODO: create a self.errors object to track MSE per iteration/fold and plot in run.py
+# TODO: check Hastie's formulas for overall error after cross-validation
 
 print("Ok.")

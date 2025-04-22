@@ -20,36 +20,42 @@ class LassoRegression():
         self.X = np.array(X)
         self.y = np.array(y)
         self.reg = reg
-
-        self.cross_validation()
         pass
 
 
-    def fit(self, lr=0.01, iterations=10000):
+    def fit(self, cross_val=False, nfolds=10, param_vals=None, lr=0.01, iterations=10000):
         """Function to fit LASSO model, using gradient descent on the intercept and feature parameters.
         
         Parameters
         ------
-        X : numpy.ndarray : column data
-        y : numpy.ndrarry : target data
-        reg : float : regularization term
+        cross_val : bool : whether to perform cross-validation to tune hyperparameters
+        nfolds : int : number of folds for cross-validation
+        param_vals : list : candidate regularization term values (if doing cross-validation)
         lr : float : learning rate 
+        iterations : int : number of gradient descent iterations
         """
 
-        self.lr = lr
-        self.iterations = iterations
+        print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% \nFitting model.\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
+        print(f"Initial model: \nB_0: {self.B_0} \nB: {self.B} \nlambda: {self.reg}")
 
-        print("Fitting model.")
-        print(f"Previous values: \nB_0: {self.B_0} \nB: {self.B}")
+        # Cross-validation to choose the best regularization value
+        if cross_val:
+            print(f"%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% \nPerforming {nfolds}-fold cross-validation... \n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
+            best_lambda = self.cross_validation(nfolds, param_vals, lr=lr, iterations=iterations)
+            self.reg = best_lambda
 
-        for k in range(self.iterations):
-            if k % 1000 == 0:
-                print(f"Iteration: {k}/{self.iterations}")  # give a status update every 100 iterations
-                self.gradient_descent_update(status=True)
-            else:
-                self.gradient_descent_update()
+            # Now update linear LASSO parameters
+            for k in range(iterations):
+                self.gradient_descent_update(lr=lr)
+                    
 
-        print(f"Updated values: \nB_0: {self.B_0} \nB: {self.B}")
+        else:  # regular gradient descent on full training set
+            for k in range(iterations):
+                if k % 1000 == 0:
+                    print(f"Iteration: {k}/{iterations}")  # give a status update every (niter/1000) iterations
+                    self.gradient_descent_update(status=True)
+
+        print(f"Updated model: \nB_0: {self.B_0} \nB: {self.B} \nlambda: {self.reg}\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
         return self
 
 
@@ -75,12 +81,68 @@ class LassoRegression():
         return folds
 
 
-    def cross_validation(self, k=10):
-        fold_indices = self._kfolds(k)
-        pass
+    def cross_validation(self, nfolds, param_vals, lr=0.01, iterations=10000):
+        """Function to perform k-fold cross-validation for selecting the best hyperparameter (in this case, regularizer lambda) value. 
+
+        Parameters
+        ----------
+        nfolds : int : number of folds
+        param_vals : list : potential parameter values from which to select the best one
+        lr : float : gradient descent learning rate
+        iterations : int : number of gradient descent iterations
+        """
+
+        folds = self._kfolds(nfolds)
+        errors = {}
+
+        for p in param_vals:
+            overall_err = 0
+
+            for fold in folds.keys():
+                train_ind = folds[fold][0]
+                val_ind = folds[fold][1]
+
+                train_X = self.X[train_ind,:]
+                train_y = self.y[train_ind]
+                val_X = self.X[val_ind,:]
+                val_y = self.y[val_ind]
+
+                curr_model = LassoRegression(train_X, train_y, p)
+
+                for k in range(iterations):
+                    curr_model.gradient_descent_update(lr=lr) 
+                
+                yhat_val = curr_model.predict(val_X)
+                err = self.MSE(yhat_val, val_y)
+                overall_err += err
+                #print(f"Fold {fold} MSE: {round(err, 5)} with parameter value {p}.")
+            
+            overall_err = overall_err / nfolds
+            errors[p] = overall_err
+            print(f"Overall MSE: {round(overall_err, 7)} with parameter value {p}.")
+
+        best_param = min(errors, key=errors.get)
+        self.reg = best_param
+        print(f"%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% \nAfter {nfolds}-fold cross validation, best lambda value is {best_param}. \n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
+
+        return best_param
 
 
-    def gradient_descent_update(self, status=False):
+    def MSE(self, pred, truth):
+        """Function to calculate MSE between model prediction and a target value.
+
+        Parameters
+        ----------
+        pred : np.ndarray : predicted output
+        truth : np.ndarray : target output
+        """
+
+        residual = np.subtract(pred, truth)
+        mse = (residual**2).mean()
+        return mse
+
+
+    def gradient_descent_update(self, lr=0.01, status=False):
         """Function to perform gradient-descent updates on the LASSO parameters. 
 
         Parameters
@@ -103,8 +165,8 @@ class LassoRegression():
         
         gradB_0 = -2 * np.sum(self.y - yhat) / self.M
 
-        self.B = self.B - self.lr*gradB
-        self.B_0 = self.B_0 - self.lr*gradB_0
+        self.B = self.B - lr*gradB
+        self.B_0 = self.B_0 - lr*gradB_0
 
         if status:
             print(f"B0: self.B_0 \nB: {self.B}")
