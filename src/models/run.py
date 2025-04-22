@@ -17,7 +17,7 @@ train_y_num = train_y.to_numpy().flatten()
 train_X_norm = utils.normalize(train_X_num)
 init_lambda = 50  # TODO: write cross-validation function
 
-model = LassoRegression()
-model.fit(train_X_norm, train_y_num, init_lambda)
+model = LassoRegression(train_X_norm, train_y_num, init_lambda)
+#model.fit()
 
 print("Ok.")
