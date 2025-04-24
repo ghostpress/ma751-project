@@ -1,14 +1,14 @@
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-
 from ridge import RidgeRegression
 import utils
 
 path_to_data = utils.get_data_directory()
 path_to_model = utils.get_model_output_directory()
+path_to_figs = utils.get_fig_output_directory()
 
 run_before = not utils.is_folder_empty(path_to_model)
+np.set_printoptions(precision=3)
 
 if not run_before:
 
@@ -19,23 +19,28 @@ if not run_before:
     # Convert to numeric-only
     train_X_num = utils.numeric_only(train_X_raw)
     train_y = train_y_raw.to_numpy().flatten()
-    # TODO: use Firas' variable selection/best subset analysis to select training data
 
-    # Normalize X, to ease GD convergence
-    train_X_norm = utils.normalize(train_X_num)
+    # Ensure X has no all-zero columns (will need to invert it)
+    train_X_nonz = utils.nonzero(train_X_num)
 
     # Add a column of ones to X
-    train_X = np.c_[np.ones(train_X_norm.shape[0]), train_X_norm]
+    train_X = np.c_[np.ones(train_X_nonz.shape[0]), train_X_nonz]  
+
+    # Fit the linear parameters
+    model = RidgeRegression.new_model(train_X, train_y)
+    model.fit()
 
     # Potential regularization parameter values, to select with cross-validation
-    lambda_vals = [0.0, 0.001, 0.1, 1.0, 10.0, 100.0, 1000.0]
-
-    model = RidgeRegression.new_model(train_X_norm, train_y)
-    model.fit(cross_val=True, nfolds=10, param_vals=lambda_vals, iterations=1000)  
+    lambda_vals = [0.0, 0.001, 0.1, 1.0, 10.0, 100.0, 1000.0, 10000.0, 100000.0]
+  
+    # Now fit lambda regularization term
+    model.fit(cross_val=True, nfolds=10, param_vals=lambda_vals)
     model.save(utils.get_model_output_directory())  
 
-else:
+    yhat = model.predict(train_X)
+    utils.plot_prediction(train_y, yhat)
 
+else:
     # Load validation data
     val_X = pd.read_csv(path_to_data + "/val_X.csv", index_col=0)
     val_y = pd.read_csv(path_to_data + "/val_y.csv", index_col=0)
@@ -44,40 +49,18 @@ else:
 
     # Add a column of ones to X
     val_X = np.c_[np.ones(val_X_num.shape[0]), val_X_num]
-    val_X = np.delete(val_X, 3, 1)
+    val_X = utils.nonzero(val_X)
     val_y = val_y.to_numpy().flatten()
 
     # Load fitted model parameters
     fitted_B = np.load(path_to_model + "/beta.npy")
-    #fitted_B0 = np.load(path_to_model + "beta0.npy")
     fitted_lambda = np.load(path_to_model + "lambda.npy")
 
     model = RidgeRegression.from_params(val_X, val_y, fitted_lambda, fitted_B)
 
-    # Check against known ridge solution:
-    #betaHat = model.solve()
-    #print(betaHat)
-    #print(fitted_B)
-
-    # TODO: create a self.errors object to track MSE per iteration/fold and plot in run.py
-    # TODO: check Hastie 7.10.2 and do diagnostic plots to show cross-validation done "the right way"
-
     # Plot model-fit results
     yhat = model.predict(val_X)
-    #print(yhat)
-    #print(val_y_num)
-
-    plt.figure(figsize=(10,10))
-    plt.scatter(val_y, yhat, c='crimson')
-    #plt.yscale('log')
-    #plt.xscale('log')
-    #p1 = max(max(yhat), max(yhat))
-    #p2 = min(min(yhat), min(yhat))
-    #plt.plot([p1, p2], [p1, p2], 'b-')
-    plt.xlabel('True Values', fontsize=15)
-    plt.ylabel('Predictions', fontsize=15)
-    plt.axis('equal')
-    plt.show()
+    utils.plot_prediction(val_y, yhat, title="Ridge Regression: Observed vs Predicted (unseen data)")
 
 
 print("Ok.") 

@@ -18,15 +18,9 @@ class RidgeRegression():
 
         self.M, self.N = X.shape
         self.X = np.array(X, dtype="int64")
-        #self.X = np.delete(self.X, 3, 1)
         self.y = np.array(y, dtype="int64")
         self.reg = reg
-        #self.B_0 = B_0 
         self.B = B
-
-        #print(self.X.shape)
-        #print(self.B.shape)
-        self.errors = {} # field to track error over training iterations
         pass
 
 
@@ -36,15 +30,14 @@ class RidgeRegression():
 
 
     @classmethod
-    def new_model(cls, X, y, reg=0.0):
+    def new_model(cls, X, y, reg=0.00001):
         # Initialize model parameter values
         M, N = X.shape
-        B = np.random.randn(N) #np.zeros(N)
-        #B_0 = 0.0
+        B = np.random.randn(N)
         return cls(X, y, reg, B)
 
 
-    def fit(self, cross_val=False, nfolds=10, param_vals=None, lr=0.001, iterations=10000):
+    def fit(self, cross_val=False, nfolds=10, param_vals=None):
         """Function to fit ridge model, using gradient descent on the intercept and feature parameters.
         
         Parameters
@@ -56,27 +49,20 @@ class RidgeRegression():
         iterations : int : number of gradient descent iterations
         """
 
-        print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\nFitting model.\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
-        print(f"Initial model: \nB: {self.B} \nlambda: {self.reg}")
-
         # Cross-validation to choose the best regularization value
         if cross_val:
             print(f"%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% \nPerforming {nfolds}-fold cross-validation... \n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
-            best_lambda = self.cross_validation(nfolds, param_vals, lr=lr, iterations=iterations)
+            best_lambda = self.cross_validation(nfolds, param_vals)
             self.reg = best_lambda
-
-            # Now update linear ridge parameters
-            for k in range(iterations):
-                self.gradient_descent_update(lr=lr)
                     
-        # Regular gradient descent on full training set
         else: 
-            for k in range(iterations):
-                if k % 1000 == 0:
-                    print(f"Iteration: {k}/{iterations}")  # give a status update every (niter/1000) iterations
-                    self.gradient_descent_update(status=True)
+            print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\nFitting model.\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
+            #print(f"Initial model: \nB: {self.B} \nlambda: {self.reg}")
+            B = self.solve(self.X, self.y)
+            self.B = B
 
-        print(f"\nUpdated model: \nB: {self.B} \nlambda: {self.reg}\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
+
+        print(f"\nFitted model: \nB: {self.B} \nlambda: {self.reg}\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
         return self
 
 
@@ -102,7 +88,7 @@ class RidgeRegression():
         return folds
 
 
-    def cross_validation(self, nfolds, param_vals, lr=0.01, iterations=10000):
+    def cross_validation(self, nfolds, param_vals):
         """Function to perform k-fold cross-validation for selecting the best hyperparameter (in this case, regularizer lambda) value. 
 
         Parameters
@@ -115,9 +101,10 @@ class RidgeRegression():
 
         folds = self._kfolds(nfolds)
         errors = {}
+        overall_err = {}
 
         for p in param_vals:
-            overall_err = 0
+            folds_err = np.zeros(nfolds)
 
             for fold in folds.keys():
                 train_ind = folds[fold][0]
@@ -129,20 +116,19 @@ class RidgeRegression():
                 val_y = self.y[val_ind]
 
                 curr_model = RidgeRegression.new_model(train_X, train_y, p)
-
-                for k in range(iterations):
-                    curr_model.gradient_descent_update(lr=lr) 
+                curr_model.solve(train_X, train_y)
+                #print(curr_model.B)
                 
                 yhat_val = curr_model.predict(val_X)
                 err = self.error(yhat_val, val_y)
-                overall_err += err
-                #print(f"Fold {fold} MSE: {round(err, 5)} with parameter value {p}.")
-            
-            overall_err = overall_err / nfolds
-            errors[p] = overall_err
-            print(f"Overall error: {round(overall_err, 7)} with parameter value {p}.")
+                folds_err[fold] = err
 
-        best_param = min(errors, key=errors.get)
+            errors[p] = folds_err
+            print(f"Errors in {nfolds} folds for parameter value {p}: ", errors[p], 5)
+            print("Mean error over all folds: ", errors[p].mean(), 5)
+            overall_err[p] = errors[p].mean()
+
+        best_param = min(overall_err, key=overall_err.get)
         self.reg = best_param
         print(f"%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% \nAfter {nfolds}-fold cross validation, best lambda value is {best_param}. \n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
         return best_param
@@ -166,30 +152,6 @@ class RidgeRegression():
         return err
 
 
-    def gradient_descent_update(self, lr=0.01, status=False):
-        """Function to perform gradient-descent updates on the ridge parameters. 
-
-        Parameters
-        ----------
-        status : bool : whether to print a status update on the parameter values and error in a given iteration
-        """
-
-        yhat = self.predict(self.X)
-        gradB = np.zeros(self.N)
-        residual = np.subtract(self.y, yhat)
-        
-        if status:
-            print(f"Error: {(np.square(residual)).mean()}")
-
-        gradB = (2/self.M) * (np.transpose(self.X)).dot(residual) + (2 * self.reg * self.B)  # FIXME: print gradB to debug
-        self.B = self.B - lr*gradB
-        #self.B_0 = self.B_0 - lr*gradB_0
-
-        if status:
-            print(f"B: {self.B}")
-        return self
-
-
     def predict(self, X):
         """Function to predict values of the target variable given features X and ridge parameters.
 
@@ -197,19 +159,32 @@ class RidgeRegression():
         ----------
         X : numpy.ndarray : feature data with which to predict
         """
-        return(X.dot(self.B)) #+ self.B_0)
+        return(X.dot(self.B))
 
 
-    def solve(self):
-        design = np.linalg.inv(np.dot(np.transpose(self.X), self.X) + (self.reg * np.identity(self.N-1)))
-        betaHat = np.dot(design, np.dot(np.transpose(self.X), self.y))
-        return betaHat
+    def solve(self, X, y):
+        """Function to compute the Beta-hat parameters from data X and y, based on the known formula for 
+        the minimizer of the squared loss in ridge regression.
+
+        Parameters
+        ----------
+        X : numpy.ndarray : feature data
+        y : numpy.ndarray : target data
+        """
+
+        A = self.reg * np.identity(self.N)
+        return (np.linalg.inv(np.dot(X.T, X) + A)).dot((X.T).dot(y))
 
 
     def save(self, destination):
+        """Function to save fitted model parameters to files in a given directory.
+
+        Parameters
+        ----------
+        destination : str : path to the output directory
+        """
 
         np.save(destination + "beta.npy", self.B)
-        #np.save(destination + "beta0.npy", self.B_0)
         np.save(destination + "lambda.npy", self.reg)
         return self
 
