@@ -1,0 +1,49 @@
+This is BibTeX, Version 0.99d (TeX Live 2019/Debian)
+Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
+The top-level auxiliary file: report-draft.aux
+The style file: plain.bst
+Database file #1: refs.bib
+Warning--there's a number but no volume in Bobilar:etal:2020
+Warning--empty journal in earth:org
+You've used 2 entries,
+            2118 wiz_defined-function locations,
+            509 strings with 4305 characters,
+and the built_in function-call counts, 663 in all, are:
+= -- 58
+> -- 40
+< -- 0
++ -- 16
+- -- 14
+* -- 52
+:= -- 124
+add.period$ -- 6
+call.type$ -- 2
+change.case$ -- 13
+chr.to.int$ -- 0
+cite$ -- 4
+duplicate$ -- 21
+empty$ -- 44
+format.name$ -- 14
+if$ -- 127
+int.to.chr$ -- 0
+int.to.str$ -- 2
+missing$ -- 2
+newline$ -- 13
+num.names$ -- 4
+pop$ -- 14
+preamble$ -- 1
+purify$ -- 11
+quote$ -- 0
+skip$ -- 12
+stack$ -- 0
+substring$ -- 28
+swap$ -- 1
+text.length$ -- 0
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 8
+warning$ -- 2
+while$ -- 5
+width$ -- 3
+write$ -- 22
+(There were 2 warnings)

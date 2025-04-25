@@ -1,0 +1,84 @@
+\documentclass{article}
+
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage[normalem]{ulem}
+\usepackage{bm}
+\usepackage{xcolor}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{graphicx}
+\usepackage{mathtools}
+\usepackage{amsthm}
+
+\newcommand\numberthis{\addtocounter{equation}{1}\tag{\theequation}}
+\setlength\parindent{0pt}
+
+\title{A Review of Methods for Regression of Glacier Evolution}
+\author{Firas Abboud, Xuan Loc Huynh, Luc\'ia Vilallonga}
+\date{April 30th, 2025}  
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+
+\begin{document}
+\maketitle
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Outline (delete later)}
+
+\begin{enumerate}
+    \item Introduction/background on glaciology, glacier modeling (can pull from proposal and Firas' notes)
+    \item Paper inspiration: Bobilar Deep Learning Applied to Glacier Evolution Modeling \cite{Bobilar:etal:2020}
+    \item Adapting the methods: new dataset, different set of models
+    \begin{enumerate}
+        \item Data exploration
+        \item Linear models mostly unsuccessful, data highly nonlinear and esp. climate data is very inter-correlated
+        \item Motivates use of other methods, in particular decision trees and ML
+    \end{enumerate}
+    \item Results
+    \item Discussion
+    \begin{enumerate}
+        \item Difficulty in applying PINNs to glaciology modeling (mostly lack of data) - cite Loc's paper
+    \end{enumerate}
+\end{enumerate}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Introduction}
+
+This paper presents a machine learning (ML) approach to modelling annual glacier-wide surface mass balance (SMB) 
+as a parameterized alternative to typical linear methods. SMB, which describes the difference between a glacier’s 
+mass accumulation in the winter and ablation in the summer, is a key process that drives glacier evolution on 
+regional and sub-regional scales. As such it is also critical to understanding and predicting environmental 
+challenges such as sea-level rise and the disruption of ocean currents and stable weather patterns globally \cite{earth:org}. \\
+
+Bobilar et. al., 2020 find that a fully-connected feed-forward model with 6 hidden layers outperforms Ordinary 
+Least-Squares (OLS) and Least Absolute Shrinkage and Selection Operator (LASSO), which are traditionally used in 
+parameterized approaches to simulating SMB from data \cite{Bobilar:etal:2020}. However, ML does not provide the 
+same interpretability that OLS and LASSO do, and the authors note that one challenge of the method is the limited 
+data available - which makes it more likely that an overparameterized ML model will overfit. Furthermore, some key 
+factors to predicting SMB may not be captured in the data, such as physical processes described by dynamical systems. \\
+
+\textcolor{red}{Add more to this, motivate methods used below. Also may want to cite other glaciology papers.}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Our Methods}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Results}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Discussion}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\pagebreak
+\bibliographystyle{plain}
+\bibliography{refs.bib}
+
+\end{document}
