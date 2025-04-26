@@ -11,7 +11,6 @@ run_before = not utils.is_folder_empty(path_to_model)
 np.set_printoptions(precision=3)
 
 if not run_before:
-
     # Load training data; may contain text-valued columns
     train_X_raw = pd.read_csv(path_to_data + "/train_X.csv", index_col=0)
     train_y_raw = pd.read_csv(path_to_data + "/train_y.csv", index_col=0)
@@ -38,29 +37,32 @@ if not run_before:
     model.save(utils.get_model_output_directory())  
 
     yhat = model.predict(train_X)
-    utils.plot_prediction(train_y, yhat)
+    utils.plot_prediction(train_y, yhat, title="Within-sample Performance")
 
 else:
-    # Load validation data
-    val_X = pd.read_csv(path_to_data + "/val_X.csv", index_col=0)
-    val_y = pd.read_csv(path_to_data + "/val_y.csv", index_col=0)
+    # Load test data; may contain text-valued columns
+    test_X_raw = pd.read_csv(path_to_data + "/test_X.csv", index_col=0)
+    test_y_raw = pd.read_csv(path_to_data + "/test_y.csv", index_col=0)
 
-    val_X_num = utils.numeric_only(val_X)
+    # Convert to numeric-only
+    test_X_num = utils.numeric_only(test_X_raw)
+    test_y = test_y_raw.to_numpy().flatten()
+
+    # Ensure X has no all-zero columns (will need to invert it)
+    test_X_nonz = utils.nonzero(test_X_num)
 
     # Add a column of ones to X
-    val_X = np.c_[np.ones(val_X_num.shape[0]), val_X_num]
-    val_X = utils.nonzero(val_X)
-    val_y = val_y.to_numpy().flatten()
+    test_X = np.c_[np.ones(test_X_nonz.shape[0]), test_X_nonz]  
 
     # Load fitted model parameters
     fitted_B = np.load(path_to_model + "/beta.npy")
     fitted_lambda = np.load(path_to_model + "lambda.npy")
 
-    model = RidgeRegression.from_params(val_X, val_y, fitted_lambda, fitted_B)
+    model = RidgeRegression.from_params(test_X, test_y, fitted_lambda, fitted_B)
 
     # Plot model-fit results
-    yhat = model.predict(val_X)
-    utils.plot_prediction(val_y, yhat, title="Ridge Regression: Observed vs Predicted (unseen data)")
+    yhat = model.predict(test_X)
+    utils.plot_prediction(test_y, yhat, title="Out-of-Sample Performance")
 
 
 print("Ok.") 
