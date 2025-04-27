@@ -1,4 +1,5 @@
 import numpy as np
+import utils  # TODO: delete
 
 class RidgeRegression():
     """Class to implement ridge regression, based on (3.42) in Hastie's 'Elements of Statistical Learning' (Springer, 2013).
@@ -173,7 +174,33 @@ class RidgeRegression():
         """
 
         A = self.reg * np.identity(self.N)
-        return (np.linalg.inv(np.dot(X.T, X) + A)).dot((X.T).dot(y))
+        matrix = np.dot(X.T, X) + A
+
+        try: 
+            result = np.linalg.inv(matrix).dot((X.T).dot(y))
+
+        except np.linalg.LinAlgError as err:
+            if 'Singular matrix' in str(err):
+                rows_equal = len(np.unique(matrix, axis=0)) < matrix.shape[0]
+                cols_equal = len(np.unique(matrix, axis=1)) < matrix.shape[1]
+                cols_zero = utils.nonzero(matrix).shape != matrix.shape
+                rows_zero = utils.nonzero(matrix.T).shape != (matrix.T).shape
+                
+                # Check if any rows or columns are equal
+                if rows_equal or cols_equal:
+                    raise ValueError(f'The matrix to be inverted in the solve step has rows or columns that are equal: rows check returned {rows_equal} and columns check returned {cols_equal}.')
+
+                # Check if any rows or columns have all-zero values
+                elif rows_zero or cols_zero:
+                    raise ValueError(f'The matrix to be inverted in the solve step has rows or columns that are all zero: rows check returned {rows_zero} and columns check returned {cols_zero}.')
+
+                # For some computational reason, the matrix is still non-singular - add some small noise independent of the response y
+                else:
+                    print('Adding some noise to the matrix to make inversion possible.')
+                    matrix = matrix + (np.random.random(matrix.shape) / 10)  #  noise in range [0, 0.1)
+                    result = np.linalg.inv(matrix).dot((X.T).dot(y))
+        
+        return result
 
 
     def save(self, destination):

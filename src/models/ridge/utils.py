@@ -47,7 +47,8 @@ def numeric_only(data):
             droplist.append(col)
 
     num = data.drop(droplist, axis=1, inplace=False)
-    return num.to_numpy()
+    num.to_numpy()
+    return np.array(num, dtype='int64')
 
 
 def normalize(X):

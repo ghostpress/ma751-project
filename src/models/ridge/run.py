@@ -65,4 +65,4 @@ else:
     utils.plot_prediction(test_y, yhat, title="Out-of-Sample Performance")
 
 
-print("Ok.") 
+print("Done.") 
