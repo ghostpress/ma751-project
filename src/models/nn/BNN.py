@@ -30,30 +30,24 @@ y = df_y['dmdtda'].values.reshape(-1,1) #.reshape(-1,1) makes it a column vector
 
 # 3. Build the 6-layer ANN, Dense: compute z=Wx+b. Order matters, they do Dense → BatchNorm → Activation → Dropout
 model = Sequential([
-    Dense(150, kernel_initializer=HeUniform(), input_shape=(X.shape[1],)), #He uniform initialization (He et al. 2015),
-    BatchNormalization(), LeakyReLU(alpha=0.08), Dropout(0.1),
+    Dense(40, kernel_initializer=HeUniform(), input_shape=(X.shape[1],)), #He uniform initialization (He et al. 2015),
+    BatchNormalization(), LeakyReLU(alpha=0.1), Dropout(0.3),
     #Each batch was normalized before applying the activation function in order to accelerate the training
-    Dense(110, kernel_initializer=HeUniform()),
-    BatchNormalization(), LeakyReLU(alpha=0.08), Dropout(0.45),
+    Dense(20, kernel_initializer=HeUniform()),
+    BatchNormalization(), LeakyReLU(alpha=0.1), Dropout(0.2),
 
-    Dense(90, kernel_initializer=HeUniform()),
-    BatchNormalization(), LeakyReLU(alpha=0.08), Dropout(0.0),
+    Dense(10, kernel_initializer=HeUniform()),
+    BatchNormalization(), LeakyReLU(alpha=0.1), Dropout(0.1),
 
-    Dense(130, kernel_initializer=HeUniform()), #He uniform initialization (He et al. 2015),
-    BatchNormalization(), LeakyReLU(alpha=0.08), Dropout(0.45),
-
-    Dense(170, kernel_initializer=HeUniform()), #He uniform initialization (He et al. 2015),
-    BatchNormalization(), LeakyReLU(alpha=0.08), Dropout(0.4),
-
-    Dense(200, kernel_initializer=HeUniform()), #He uniform initialization (He et al. 2015),
-    BatchNormalization(), LeakyReLU(alpha=0.08), Dropout(0.0),
+    Dense(5, kernel_initializer=HeUniform()),
+    BatchNormalization(), LeakyReLU(alpha=0.1), Dropout(0.01),
 
     Dense(1, kernel_initializer=HeUniform(), activation='linear') #output layer
 ])
 
 # 4. Compile the model with RMSprop optimizer
 model.compile(
-    optimizer=RMSprop(learning_rate=0.002335),
+    optimizer=RMSprop(learning_rate=0.0005),
     loss='mse',
     metrics=['mae']
 )
@@ -105,13 +99,5 @@ plt.title('Predicted vs. Actual SMB (Training Data)')
 plt.tight_layout()
 plt.show()
 
-# 2) Residuals vs. actual (optional)
-residuals = abs(y_hat - y_true)
-plt.figure()
-plt.scatter(y_true, residuals, alpha=0.5)
-plt.hlines(0, y_true.min(), y_true.max(), colors='red', linestyles='--')
-plt.xlabel('Actual SMB')
-plt.ylabel('Residual |Pred - True|')
-plt.title('Residuals vs. Actual SMB')
-plt.tight_layout()
-plt.show()
+
+
