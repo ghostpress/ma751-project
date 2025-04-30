@@ -1,5 +1,7 @@
 import numpy as np
 import pandas as pd
+from sklearn.metrics import mean_squared_error
+
 from ridge import RidgeRegression
 import utils
 
@@ -63,6 +65,10 @@ else:
     # Plot model-fit results
     yhat = model.predict(test_X)
     utils.plot_prediction(test_y, yhat, title="Out-of-Sample Performance")
+
+    # Report test MSE
+    mse = mean_squared_error(test_y, yhat)
+    print(f"Test MSE: {mse}")
 
 
 print("Done.") 
