@@ -68,23 +68,28 @@ history = model.fit(
     verbose=2 #report per-epoch training/validation curves to illustrate convergence and the effect of regularization
 )
 
-# Generate predictions on the “full test” data
-y_pred = model.predict(X)
+df_X_test = pd.read_csv("test_X.csv")
+df_X_test[['period_min', 'period_max']] = (
+    df_X['period']
+      .str.split('-', expand=True)    # split "2000-2010" → ["2000","2010"]
+      .astype(int)                    # convert to integers
+)
 
-# (Optional) save them to CSV
-pd.DataFrame(y_pred, columns=['dmdtda_pred']).to_csv('predictions.csv', index=False)
+X_test = df_X_test.drop(['Unnamed: 0', 'rgi_id', 'period'], axis=1).values
+df_y_test = pd.read_csv("test_y.csv")
+y_test = df_y_test['dmdtda'].values.reshape(-1,1) #.reshape(-1,1) makes it a column vector of shape so Keras sees it as a single‐output regression.
+
+y_pred = model.predict(X_test)
 
 # Last‐epoch training error
 last_train_mse = history.history['loss'][-1]
 last_train_mae = history.history['mae'][-1]
-print(f"Final training MSE: {last_train_mse:.4f}")
-print(f"Final training MAE: {last_train_mae:.4f}")
-
-
+print(f"Final test MSE: {last_train_mse:.4f}")
+print(f"Final test MAE: {last_train_mae:.4f}")
 
 # assuming y and y_pred are flat 1-D arrays of length n_samples
 # Flatten into 1-D arrays
-y_true = y.flatten()
+y_true = y_test.flatten()
 y_hat  = y_pred.flatten()
 
 # 1) Scatter of predicted vs. actual
@@ -95,9 +100,6 @@ plt.plot([y_true.min(), y_true.max()],
          'r--', linewidth=1)  # 45° line
 plt.xlabel('Actual SMB')
 plt.ylabel('Predicted SMB')
-plt.title('Predicted vs. Actual SMB (Training Data)')
+plt.title('Predicted vs. Actual SMB (Test Data)')
 plt.tight_layout()
 plt.show()
-
-
-
